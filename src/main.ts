@@ -8,7 +8,7 @@ import { Control } from 'magic-home';
 import { Discovery } from 'magic-home';
 import { Logger } from "@crowbartools/firebot-custom-scripts-types/types/modules/logger";
 import { LocalStorage } from "node-localstorage";
-// global.localStorage = new LocalStorage("./magicHome")
+const localStorage = new LocalStorage("./magicHome")
 
 // interface Params {
 //   id: [string],
@@ -35,31 +35,32 @@ const script: Firebot.CustomScript<InputParams> = {
     };
   },
   getDefaultParameters: () => {
-    // let encodedDevices = localStorage.getItem("test");
-    // let storedDevices: {[key:string]:string} = {replace:"me"};
-    // if (!encodedDevices) {
-    //   discoverLights().then(devices => {
-    //     storedDevices = devices;
-    //     localStorage.setItem("test", JSON.stringify(devices));
-    //   })
-    // } else {
-    //   storedDevices = JSON.parse(encodedDevices);
-    // }
+    // localStorage.setItem("test","12345");
+    let encodedDevices = localStorage.getItem("encodedDevices");
+    let storedDevices: {[key:string]:string} = {replace:"me"};
+    if (!encodedDevices) {
+      discoverLights().then(devices => {
+        storedDevices = devices;
+        localStorage.setItem("encodedDevices", JSON.stringify(devices));
+      })
+    } else {
+      storedDevices = JSON.parse(encodedDevices);
+    }
 
     
-    let discovery = new Discovery();
-    let deviceIDs:[string?] = [];
-    discovery.scan(1000).then(devices => {
-      devices.forEach(device => {
-        deviceIDs.push(device.id)
-      });
-    });
+    // let discovery = new Discovery();
+    // let deviceIDs:[string?] = [];
+    // discovery.scan(1000).then(devices => {
+    //   devices.forEach(device => {
+    //     deviceIDs.push(device.id)
+    //   });
+    // });
 
     return {
       id: {
         type: "enum",
         showBottomHr : true,
-        options: ["asdf"],
+        options: Object.keys(storedDevices),
         default: ['asdf'].length == 0 ? "No devices found - please try to reload the script." : "",
         description: "Device ID",
       },
@@ -78,14 +79,14 @@ const script: Firebot.CustomScript<InputParams> = {
   },
   run: async (runRequest: RunRequest<InputParams>): Promise<ScriptReturnObject> => {
     logger = runRequest.modules.logger;
-    // logger.info("thing from storage is " + localStorage.getItem("test"))
+    // logger.info("thing from storage is " + localStorage.getItem("encodedDevices"))
     let thing: ScriptReturnObject = {
       // success: true,
       success: false,
       errorMessage: "Failed to run the script!", // If 'success' is false, this message is shown in a Firebot popup.
       effects: []
     }
-    let foundDevices:{[key:string]: string} = runRequest.modules.customVariableManager.getCustomVariable("magicHomeDevices");
+    let foundDevices:{[key:string]: string} = JSON.parse(localStorage.getItem("encodedDevices"))
 
     try {
       // discover devices if not already declared
